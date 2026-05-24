@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مراجعة · Murojaah Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c8a84b;
+    --gold-dim: rgba(200,168,75,0.18);
+    --gold-glow: rgba(200,168,75,0.08);
+    --bg: #0a0906;
+    --bg2: #111009;
+    --card: #131109;
+    --border: #1e1b0e;
+    --text: #e2dbc5;
+    --muted: #6b6450;
+    --green: #5bba8a;
+    --red: #c0604a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: 'Lora', Georgia, serif; min-height: 100vh; }
+
+  /* ── LAYOUT ── */
+  .app { max-width: 480px; margin: 0 auto; padding-bottom: 80px; position: relative; }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(170deg, #1a1500 0%, var(--bg) 100%);
+    padding: 28px 18px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 20;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .arabic-title { font-family: 'Amiri', serif; font-size: 40px; color: var(--gold); line-height: 1; }
+  .app-sub { font-size: 9px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+  .streak-pill { background: #150f00; border: 1px solid var(--gold-dim); border-radius: 10px; padding: 8px 14px; text-align: center; }
+  .streak-fire { font-size: 20px; display: block; line-height: 1; }
+  .streak-num { font-size: 22px; color: var(--gold); font-weight: bold; display: block; line-height: 1.1; }
+  .streak-lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; }
+
+  .countdown-strip { display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .cd-item { flex: 1; text-align: center; min-width: 50px; }
+  .cd-num { display: block; font-size: 15px; color: var(--gold); font-weight: bold; line-height: 1; }
+  .cd-lbl { display: block; font-size: 9px; color: var(--muted); }
+  .cd-sep { font-size: 10px; color: #333; }
+
+  .overall-wrap { }
+  .overall-meta { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 4px; color: var(--muted); }
+  .overall-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; }
+  .overall-fill { height: 100%; background: linear-gradient(90deg, #6b5012, var(--gold)); border-radius: 999px; transition: width .6s ease; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 19; }
+  .tab-btn { flex: 1; padding: 11px 2px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 11px; font-family: 'Lora', serif; border-bottom: 2px solid transparent; transition: all .2s; }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ── PAGE ── */
+  .page { padding: 14px 14px 0; display: none; }
+  .page.active { display: block; }
+
+  /* ── TODAY ── */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .wk-arrow { background: none; border: 1px solid var(--border); color: #666; font-size: 22px; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-family: serif; transition: border-color .2s; }
+  .wk-arrow:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .wk-info { text-align: center; }
+  .wk-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; }
+  .wk-juz { font-size: 16px; color: var(--gold); font-weight: bold; margin-top: 2px; }
+
+  .surah-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .surah-meta { font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .surah-name { font-size: 14px; color: var(--text); margin-bottom: 6px; }
+  .surah-stat { font-size: 11px; color: var(--muted); }
+  .surah-stat .rating-kuat { color: var(--green); }
+  .surah-stat .rating-sedang { color: var(--gold); }
+  .surah-stat .rating-lemah { color: var(--red); }
+
+  .week-dots { display: flex; gap: 5px; margin-bottom: 5px; }
+  .w-dot { flex: 1; background: #0f0e0b; border: 1px solid var(--border); border-radius: 7px; padding: 6px 2px; text-align: center; }
+  .w-dot.today { border-color: var(--gold-dim); }
+  .w-dot.done { background: #150f00; border-color: rgba(200,168,75,0.5); }
+  .w-dot.missed { opacity: 0.45; }
+  .w-dot-day { display: block; font-size: 8px; color: var(--muted); margin-bottom: 2px; }
+  .w-dot-mark { display: block; font-size: 14px; color: var(--gold); }
+  .week-prog-lbl { font-size: 9px; color: var(--muted); text-align: center; margin-bottom: 14px; }
+
+  .session-btn { width: 100%; background: linear-gradient(135deg, #241a00, #160f00); border: 1px solid var(--gold); color: var(--gold); padding: 16px; border-radius: 10px; font-size: 14px; cursor: pointer; font-family: 'Lora', serif; font-weight: bold; letter-spacing: 0.3px; margin-bottom: 6px; transition: all .2s; }
+  .session-btn:hover:not(:disabled) { background: linear-gradient(135deg, #2e2100, #1e1400); box-shadow: 0 0 20px var(--gold-glow); }
+  .session-btn.done { background: #0a140d; border-color: var(--green); color: var(--green); cursor: default; }
+  .session-note { font-size: 11px; color: var(--muted); text-align: center; font-style: italic; margin-bottom: 6px; }
+  .undo-btn { display: block; margin: 0 auto 14px; background: none; border: 1px solid #2a2010; color: #6b6450; font-size: 11px; font-family: 'Lora', serif; padding: 5px 14px; border-radius: 6px; cursor: pointer; transition: all .2s; }
+  .undo-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .rating-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+  .rating-lbl { font-size: 10px; color: var(--muted); margin-bottom: 10px; letter-spacing: 0.5px; }
+  .rating-btns { display: flex; gap: 7px; }
+  .r-btn { flex: 1; background: #0a0906; border: 1px solid var(--border); color: var(--muted); padding: 9px 4px; border-radius: 7px; cursor: pointer; font-size: 11px; font-family: 'Lora', serif; transition: all .2s; }
+  .r-btn.active { border-color: var(--gold); color: var(--gold); background: #150f00; }
+  .r-btn:hover { border-color: var(--gold-dim); }
+
+  /* ── JOURNAL ── */
+  .journal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .journal-title { font-size: 13px; color: var(--gold); }
+  .journal-date-nav { display: flex; gap: 6px; align-items: center; }
+  .jdate-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 16px; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .jdate-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .jdate-lbl { font-size: 11px; color: var(--muted); min-width: 80px; text-align: center; }
+
+  .journal-textarea {
+    width: 100%; background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 14px; font-family: 'Lora', serif;
+    font-size: 13px; line-height: 1.8; resize: vertical; min-height: 160px;
+    outline: none; transition: border-color .2s;
+  }
+  .journal-textarea:focus { border-color: var(--gold-dim); }
+  .journal-textarea::placeholder { color: var(--muted); font-style: italic; }
+  .journal-save-btn { margin-top: 8px; background: var(--gold); color: var(--bg); border: none; border-radius: 7px; padding: 9px 20px; cursor: pointer; font-family: 'Lora', serif; font-weight: bold; font-size: 12px; }
+  .journal-save-btn:hover { opacity: 0.88; }
+  .journal-saved-badge { font-size: 10px; color: var(--green); margin-top: 6px; display: none; }
+
+  .journal-list-header { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin: 20px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .journal-entry { background: var(--card); border: 1px solid var(--border); border-left: 2px solid var(--gold-dim); border-radius: 0 10px 10px 0; padding: 12px 14px; margin-bottom: 10px; }
+  .je-date { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+  .je-juz { font-size: 10px; color: var(--gold); margin-bottom: 6px; }
+  .je-text { font-size: 12px; color: #bbb; line-height: 1.75; font-style: italic; }
+  .je-delete { float: right; background: none; border: none; color: #333; cursor: pointer; font-size: 14px; }
+  .je-delete:hover { color: var(--red); }
+  .no-entries { font-size: 12px; color: var(--muted); font-style: italic; text-align: center; padding: 20px; }
+
+  /* ── ROADMAP ── */
+  .section-title { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+  .group-lbl { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 10px; }
+  .rm-row { display: flex; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; transition: border-color .2s; }
+  .rm-row.current { border-color: rgba(200,168,75,0.4); background: #150f00; }
+  .rm-week { display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0; }
+  .rm-wk-lbl { font-size: 8px; color: var(--muted); }
+  .rm-wk-num { font-size: 18px; font-weight: bold; color: #444; }
+  .rm-wk-num.active { color: var(--gold); }
+  .rm-wk-num.done-wk { color: var(--green); }
+  .rm-body { flex: 1; min-width: 0; }
+  .rm-juz { font-size: 13px; color: var(--text); font-weight: bold; margin-bottom: 2px; }
+  .rm-surah { font-size: 10px; color: var(--muted); margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rm-bar-bg { height: 4px; background: rgba(255,255,255,0.05); border-radius: 999px; overflow: hidden; }
+  .rm-bar-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+  .rm-status { font-size: 18px; flex-shrink: 0; }
+  .rm-legend { display: flex; gap: 12px; justify-content: center; font-size: 9px; color: var(--muted); margin: 14px 0 20px; flex-wrap: wrap; }
+
+  /* ── GUIDE ── */
+  .wisdom-card { background: linear-gradient(135deg, #1a1500, var(--bg)); border: 1px solid var(--gold-dim); border-radius: 14px; padding: 22px; margin-bottom: 16px; }
+  .wisdom-q { font-size: 52px; color: rgba(200,168,75,0.12); line-height: 1; margin-bottom: -18px; font-family: 'Amiri', serif; }
+  .wisdom-ar { font-family: 'Amiri', serif; font-size: 17px; color: var(--gold); text-align: right; direction: rtl; margin-bottom: 10px; line-height: 1.9; }
+  .wisdom-txt { font-size: 13px; line-height: 1.9; color: #d4ccb4; font-style: italic; margin-bottom: 10px; }
+  .wisdom-src { font-size: 10px; color: var(--gold); margin-bottom: 16px; }
+  .wisdom-next { background: none; border: 1px solid var(--gold-dim); color: var(--gold); padding: 7px 14px; border-radius: 6px; cursor: pointer; font-family: 'Lora', serif; font-size: 11px; }
+  .wisdom-next:hover { border-color: var(--gold); }
+
+  .concept-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 18px; }
+  .concept-ttl { font-size: 13px; color: var(--gold); font-weight: bold; margin-bottom: 12px; }
+  .c-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
+  .c-day { font-size: 10px; color: var(--gold); font-weight: bold; min-width: 58px; flex-shrink: 0; padding-top: 2px; }
+  .c-task { font-size: 12px; color: #aaa; line-height: 1.65; }
+
+  .tips-ttl { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  .tip-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; cursor: pointer; transition: border-color .2s; }
+  .tip-card:hover { border-color: var(--gold-dim); }
+  .tip-card.open { border-color: var(--gold-dim); }
+  .tip-hdr { display: flex; gap: 10px; align-items: center; }
+  .tip-icon { font-size: 18px; }
+  .tip-name { flex: 1; font-size: 13px; color: var(--text); }
+  .tip-chevron { font-size: 11px; color: var(--muted); }
+  .tip-body { font-size: 12px; color: #999; line-height: 1.7; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: none; }
+  .tip-card.open .tip-body { display: block; }
+
+  .special-note { background: #0c0b07; border: 1px solid var(--border); border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0; padding: 18px; margin: 16px 0 24px; }
+  .sn-title { font-size: 13px; color: var(--gold); font-weight: bold; margin-bottom: 10px; }
+  .sn-body { font-size: 13px; color: #bbb; line-height: 1.9; }
+  .sn-body em { color: var(--gold); }
+  .sn-body strong { color: var(--gold); }
+
+  .ayah-footer { text-align: center; font-family: 'Amiri', serif; font-size: 20px; color: rgba(200,168,75,0.3); padding: 20px 0 10px; }
+  .ayah-trans { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* ── CELEBRATE ── */
+  .celebrate { position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--gold); color: var(--bg); padding: 10px 22px; border-radius: 999px; font-weight: bold; z-index: 300; font-size: 14px; box-shadow: 0 4px 30px rgba(200,168,75,0.5); transition: transform .4s cubic-bezier(.175,.885,.32,1.275); white-space: nowrap; font-family: 'Lora', serif; }
+  .celebrate.show { transform: translateX(-50%) translateY(0); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: #2a2510; border-radius: 2px; }
+
+  @keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .page.active { animation: fadein .25s ease; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- CELEBRATE BANNER -->
+  <div class="celebrate" id="celebrate">✨ MasyaAllah! Juz ini sudah KUAT! ✨</div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="arabic-title">مراجعة</div>
+        <div class="app-sub">Murojaah · 10 Juz · Sepekan 1 Juz</div>
+      </div>
+      <div class="streak-pill">
+        <span class="streak-fire">🔥</span>
+        <span class="streak-num" id="streakNum">0</span>
+        <span class="streak-lbl">hari berturut</span>
+      </div>
+    </div>
+    <div class="countdown-strip">
+      <div class="cd-item"><span class="cd-num" id="cdDays">—</span><span class="cd-lbl">hari</span></div>
+      <div class="cd-sep">→ Ramadan 2027 →</div>
+      <div class="cd-item"><span class="cd-num" id="cdWeeks">—</span><span class="cd-lbl">minggu</span></div>
+      <div class="cd-sep">·</div>
+      <div class="cd-item"><span class="cd-num" id="cdJuz">0/10</span><span class="cd-lbl">juz kuat</span></div>
+    </div>
+    <div class="overall-wrap">
+      <div class="overall-meta">
+        <span>Progress pemulihan</span>
+        <span id="overallPct" style="color:var(--gold)">0%</span>
+      </div>
+      <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('today')">📖 Hari Ini</button>
+    <button class="tab-btn" onclick="switchTab('journal')">📓 Jurnal</button>
+    <button class="tab-btn" onclick="switchTab('roadmap')">🗺 Roadmap</button>
+    <button class="tab-btn" onclick="switchTab('guide')">💡 Panduan</button>
+  </div>
+
+  <!-- ══════ TAB: TODAY ══════ -->
+  <div class="page active" id="tab-today">
+
+    <div class="week-nav">
+      <button class="wk-arrow" onclick="changeWeek(-1)">‹</button>
+      <div class="wk-info">
+        <div class="wk-label" id="wkLabel">Minggu 1 dari 10</div>
+        <div class="wk-juz" id="wkJuz">Juz 1</div>
+      </div>
+      <button class="wk-arrow" onclick="changeWeek(1)">›</button>
+    </div>
+
+    <div class="surah-card">
+      <div class="surah-meta">Cakupan hafalan minggu ini</div>
+      <div class="surah-name" id="surahName">—</div>
+      <div class="surah-stat" id="surahStat">—</div>
+    </div>
+
+    <div class="week-dots" id="weekDots"></div>
+    <div class="week-prog-lbl" id="weekProgLbl"></div>
+
+    <button class="session-btn" id="sessionBtn" onclick="doSession()">▶ Tandai Sesi Hari Ini</button>
+    <div id="sessionNote" style="display:none">
+      <div class="session-note">JazakAllah khair! Konsistensi lebih berharga dari bakat. 🤲</div>
+      <button class="undo-btn" onclick="undoSession()">↩ Batal (salah pencet)</button>
+    </div>
+
+    <div class="rating-wrap">
+      <div class="rating-lbl">Jujur, kondisi hafalanmu di juz ini sekarang?</div>
+      <div class="rating-btns">
+        <button class="r-btn" id="rb-lemah" onclick="setRating('lemah')">😟 Masih lemah</button>
+        <button class="r-btn" id="rb-sedang" onclick="setRating('sedang')">🙂 Lumayan</button>
+        <button class="r-btn" id="rb-kuat" onclick="setRating('kuat')">💪 Kuat!</button>
+      </div>
+    </div>
+
+    <!-- mini wisdom -->
+    <div class="wisdom-card" style="padding:14px 16px; margin-bottom:20px;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">HIKMAH HARI INI</div>
+      <div class="wisdom-txt" id="miniWisdomTxt" style="margin-bottom:6px;"></div>
+      <div class="wisdom-src" id="miniWisdomSrc" style="margin-bottom:10px;"></div>
+      <button class="wisdom-next" onclick="nextWisdom()">Hikmah lain →</button>
+    </div>
+  </div>
+
+  <!-- ══════ TAB: JOURNAL ══════ -->
+  <div class="page" id="tab-journal">
+
+    <div class="journal-header">
+      <div class="journal-title">📓 Jurnal Hati</div>
+      <div class="journal-date-nav">
+        <button class="jdate-btn" onclick="changeJournalDate(-1)">‹</button>
+        <div class="jdate-lbl" id="jDateLbl">—</div>
+        <button class="jdate-btn" onclick="changeJournalDate(1)">›</button>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;" id="journalJuzCtx"></div>
+
+    <textarea class="journal-textarea" id="journalInput"
+      placeholder="Tulis apa saja di sini...&#10;&#10;Perasaan hari ini, syukur kecil, do'a yang ingin kamu panjatkan, bagian hafalan yang susah, godaan yang kamu hadapi, atau apapun yang ingin kamu curahkan kepada Allah...&#10;&#10;Ini ruangmu. Jujur saja."></textarea>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+      <button class="journal-save-btn" onclick="saveJournal()">Simpan</button>
+      <span class="journal-saved-badge" id="savedBadge">✓ Tersimpan</span>
+    </div>
+
+    <div class="journal-list-header">Semua Entri Jurnal</div>
+    <div id="journalList"></div>
+  </div>
+
+  <!-- ══════ TAB: ROADMAP ══════ -->
+  <div class="page" id="tab-roadmap">
+    <div class="section-title">Peta 10 Minggu Pemulihanmu</div>
+    <div class="group-lbl">📗 Juz Awal (1–5)</div>
+    <div id="rmAwal"></div>
+    <div class="group-lbl" style="margin-top:18px;">📘 Juz Akhir (26–30)</div>
+    <div id="rmAkhir"></div>
+    <div class="rm-legend">
+      <span>✅ Kuat</span><span>🔄 Proses</span><span>⚠️ Perlu dikejar</span><span>○ Belum</span>
+    </div>
+  </div>
+
+  <!-- ══════ TAB: GUIDE ══════ -->
+  <div class="page" id="tab-guide">
+
+    <div class="wisdom-card">
+      <div class="wisdom-q">❝</div>
+      <div class="wisdom-ar" id="guideWisdomAr"></div>
+      <div class="wisdom-txt" id="guideWisdomTxt"></div>
+      <div class="wisdom-src" id="guideWisdomSrc"></div>
+      <button class="wisdom-next" onclick="nextWisdom()">Hikmah berikutnya →</button>
+    </div>
+
+    <div class="concept-card">
+      <div class="concept-ttl">📐 Cara Pakai: Sepekan 1 Juz</div>
+      <div class="c-row"><div class="c-day">Hari 1–2</div><div class="c-task">Baca halaman 1–10 perlahan, 3× tiap halaman. Dengarkan murotal sambil ikut melafazkan.</div></div>
+      <div class="c-row"><div class="c-day">Hari 3–4</div><div class="c-task">Lanjutkan halaman 11–20. Mulai test diri sendiri: tutup mushaf, coba lanjutkan dari pertengahan ayat.</div></div>
+      <div class="c-row"><div class="c-day">Hari 5</div><div class="c-task">Sambungkan halaman 1–20 penuh tanpa berhenti. Rekam suaramu sendiri jika bisa — dengarkan kembali.</div></div>
+      <div class="c-row"><div class="c-day">Hari 6</div><div class="c-task">Ulang separuh juz dari awal. Perhatikan bagian mana yang masih tersangkut — fokus di sana.</div></div>
+      <div class="c-row"><div class="c-day">Hari 7</div><div class="c-task">Ulang PENUH sambung dari awal sampai akhir. Nilai jujur: Lemah / Sedang / Kuat. Siap minggu depan?</div></div>
+    </div>
+
+    <div class="tips-ttl">🧠 Tips untuk Otak yang Gampang Distrak</div>
+
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">🕌</span><span class="tip-name">Waktu terbaik: setelah Subuh</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Otak paling segar, syaitan baru bangun, dunia masih sepi. Jadikan ini waktu sakral yang tidak bisa diganggu oleh apapun. Kalau perlu, bilang ke orang rumah: "Setelah Subuh jangan ganggu aku 20 menit."</div>
+    </div>
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">📍</span><span class="tip-name">Satu tempat khusus saja</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Pilih satu sudut rumah sebagai "pos murojaah". Otak akan otomatis masuk mode hafalan begitu kamu duduk di sana. Konsistensi tempat = konsistensi mental.</div>
+    </div>
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">🔁</span><span class="tip-name">Aturan 7× keras</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Sebelum pindah ayat berikutnya, ulang 7× dengan suara keras. Suaramu sendiri adalah jangkar terkuat untuk hafalan. Jangan berbisik — keraskan, meskipun terasa aneh.</div>
+    </div>
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">📵</span><span class="tip-name">HP jauh dari jangkauan</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Bukan cukup silent — taruh di ruangan lain. Penelitian kognitif membuktikan: hanya mengetahui HP ada di dekatmu sudah mengurangi kapasitas otak sekitar 20%. Jauhkan. Fisik.</div>
+    </div>
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">🎧</span><span class="tip-name">Murotal sebagai teman</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Dengarkan qari favoritmu membaca juz yang sedang kamu murojaah — sambil kamu ikut melafazkan pelan-pelan. Telinga dan mulut bekerja bersama = hafalan lebih kuat. Syaikh Mishary Rashid atau Al-Husary sangat direkomendasikan untuk tartil.</div>
+    </div>
+    <div class="tip-card" onclick="this.classList.toggle('open')">
+      <div class="tip-hdr"><span class="tip-icon">🤲</span><span class="tip-name">Doa sebelum dan sesudah</span><span class="tip-chevron">▼</span></div>
+      <div class="tip-body">Sebelum mulai baca: <em style="color:var(--gold)">رَبِّ زِدْنِي عِلْمًا</em> — "Ya Rabb, tambahkan ilmuku." Setelah selesai, minta spesifik: "Ya Allah, kuatkan juz ini di hatiku dan jangan biarkan ia pergi." Hafalan bukan soal otak — ini soal izin Allah.</div>
+    </div>
+
+    <div class="special-note">
+      <div class="sn-title">💬 Khusus untukmu yang sedang berjuang dari maksiat</div>
+      <div class="sn-body">
+        Rasulullah ﷺ bersabda: <em>"Orang yang membaca Al-Qur'an dengan terbata-bata dan susah payah mendapat dua pahala."</em>
+        <br><br>
+        Ibnu Qayyim berkata: <em>"Dosa membuat hati berkarat. Taubat dan istighfar adalah yang membersihkannya — dan Al-Qur'an adalah yang meneranginya kembali."</em>
+        <br><br>
+        Kamu tidak perlu bersih dulu untuk membuka Al-Qur'an. Al-Qur'an itu yang akan membersihkanmu. Setiap sesi hari ini — meski kamu merasa tidak layak — adalah <strong>jihad yang nyata di sisi Allah.</strong>
+        <br><br>
+        Mulai hari ini. Bukan setelah sempurna. <strong>Sekarang.</strong>
+      </div>
+    </div>
+
+    <div class="ayah-footer">
+      لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ
+      <div class="ayah-trans">"Jangan berputus asa dari rahmat Allah" — Az-Zumar: 53</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════
+const MY_JUZ = [
+  { id: 1,  label: "Juz 1",  surah: "Al-Baqarah 1–141",              group: "awal" },
+  { id: 2,  label: "Juz 2",  surah: "Al-Baqarah 142–252",            group: "awal" },
+  { id: 3,  label: "Juz 3",  surah: "Al-Baqarah 253 – Ali Imran 91", group: "awal" },
+  { id: 4,  label: "Juz 4",  surah: "Ali Imran 92 – An-Nisa 23",     group: "awal" },
+  { id: 5,  label: "Juz 5",  surah: "An-Nisa 24–147",                group: "awal" },
+  { id: 26, label: "Juz 26", surah: "Al-Ahqaf – Az-Zariyat",         group: "akhir" },
+  { id: 27, label: "Juz 27", surah: "Az-Zariyat – Al-Hadid",         group: "akhir" },
+  { id: 28, label: "Juz 28", surah: "Al-Mujadila – At-Tahrim",       group: "akhir" },
+  { id: 29, label: "Juz 29", surah: "Al-Mulk – Al-Mursalat",        group: "akhir" },
+  { id: 30, label: "Juz 30", surah: "An-Naba – An-Nas",              group: "akhir" },
+];
+const WEEKLY_ORDER = [1,2,3,4,5,26,27,28,29,30];
+
+const WISDOMS = [
+  // ── HAFALAN & MUROJAAH ──
+  { ar: "مَن رَاجَعَ حِفظَهُ كُلَّ يَومٍ أَمِنَ نِسيَانَه", text: "Siapa yang murojaah hafalannya setiap hari, ia akan aman dari lupa.", source: "Pepatah ulama hafidz" },
+  { ar: "تَعَاهَدُوا هَذَا القُرآنَ فَوَالَّذِي نَفسِي بِيَدِهِ لَهُوَ أَشَدُّ تَفَلُّتًا مِنَ الإِبِلِ فِي عُقُلِهَا", text: "Rasulullah ﷺ bersabda: 'Jaga terus Al-Qur'an ini. Demi Allah yang jiwaku di tangan-Nya, ia lebih cepat lepas daripada unta dari ikatannya.' — Maka ikat hafalanmu tiap hari, sebelum ia lari.", source: "HR. Bukhari & Muslim" },
+  { ar: "إِنَّ الَّذِي يَقرَأُ القُرآنَ وَهُوَ يَشُقُّ عَلَيهِ لَهُ أَجرَانِ", text: "Rasulullah ﷺ bersabda: 'Orang yang membaca Al-Qur'an dengan terbata-bata dan susah payah mendapat DUA pahala.' Jadi kalau hari ini hafalanmu berantakan dan kamu susah payah — itupun dihitung Allah.", source: "HR. Bukhari & Muslim" },
+  { ar: "", text: "Imam Syafi'i berkata: 'Aku mengadukan kepada guruku Waki' tentang buruknya hafalanku. Beliau menasihatiku untuk meninggalkan maksiat. Katanya: ilmu adalah cahaya, dan cahaya Allah tidak diberikan kepada orang yang bermaksiat.' Lalu beliau meninggalkan maksiat — dan jadilah ia imam besar.", source: "Imam Asy-Syafi'i" },
+  { ar: "", text: "Imam Nawawi mengkhatamkan Al-Qur'an di waktu muda dalam kondisi sangat miskin. Ia tidur di masjid, makan seadanya, dan belajar 12 pelajaran sehari. Ia berkata: 'Waktu adalah amanah yang paling berat.' Ia wafat di usia 45 — tapi meninggalkan ratusan karya.", source: "Kisah Imam An-Nawawi" },
+
+  // ── KISAH TAUBAT & BANGKIT ──
+  { ar: "", text: "Fudhail bin 'Iyadh adalah perampok paling ditakuti di jalan antara Merv dan Baward. Suatu malam, saat hendak merampok, ia mendengar seseorang di atas rumah membaca: 'Belumkah tiba waktunya bagi orang beriman untuk tunduk hatinya?' — Fudhail menangis, bertaubat seketika, dan menjadi salah satu wali terbesar. Satu ayat mengubah segalanya.", source: "Kisah Fudhail bin 'Iyadh" },
+  { ar: "", text: "Malik bin Dinar sebelum bertaubat adalah pemabuk berat. Ia pernah bermimpi dikejar ular besar di hari kiamat — lalu seorang tua lemah menolongnya dari neraka. Ia bertanya: 'Siapa kamu?' Jawabnya: 'Aku adalah amal shalihmu yang kecil-kecil.' Ia terbangun menangis dan tidak pernah kembali ke maksiat.", source: "Kisah Malik bin Dinar" },
+  { ar: "", text: "Bisyr Al-Hafi dulu dikenal sebagai pemuda yang suka berfoya-foya. Suatu hari ia menemukan kertas bertuliskan nama Allah di jalanan, ia pungut dan wangikan dengan minyak wangi. Malam harinya ia mimpi dikatakan: 'Wahai Bisyr, kamu telah mengharumkan nama-Ku, maka Aku akan harumkan namamu di dunia dan akhirat.' Sejak itu hidupnya berubah total.", source: "Kisah Bisyr Al-Hafi" },
+  { ar: "", text: "Abdullah bin Mubarak di masa muda sangat mencintai seorang wanita hingga ia berdiri di bawah jendela rumahnya sepanjang malam di musim dingin bersalju. Saat azan Subuh berkumandang, ia tersadar dan menangis: 'Untuk manusia aku sanggup bersabar dalam dingin — untuk Allah aku tak mampu?' Sejak malam itu ia menjadi salah satu ulama terbesar zamannya.", source: "Kisah Abdullah bin Mubarak" },
+  { ar: "", text: "Ibnu Hajar Al-Asqalani di masa muda sangat lemah hafalannya. Ia melihat air menetes perlahan ke batu keras hingga melubanginya. Ia berkata kepada dirinya: 'Hatiku lebih lembut dari batu itu. Ilmu yang terus-menerus pasti akan meresap.' Ia kembali belajar dengan sabar — dan menjadi hafidz serta muhaddits terbesar sepanjang sejarah.", source: "Kisah Ibnu Hajar Al-Asqalani" },
+
+  // ── NASIHAT ULAMA ──
+  { ar: "", text: "Ibnu Qayyim Al-Jauziyyah berkata: 'Hati itu seperti cermin. Maksiat adalah debu yang mengotorinya. Semakin banyak dosa, semakin gelap cermin itu — hingga ia tidak bisa lagi memantulkan cahaya wahyu. Taubat dan tilawah adalah kain pembersihnya.'", source: "Ibnu Qayyim Al-Jauziyyah, Al-Jawabul Kafi" },
+  { ar: "", text: "Ibnu Qayyim berkata: 'Jangan katakan: aku akan bersih dulu dari dosa, baru aku menghafal. Mulailah menghafal sekarang — karena hafalanlah yang akan menarikmu keluar dari maksiat, bukan sebaliknya.'", source: "Ibnu Qayyim Al-Jauziyyah" },
+  { ar: "", text: "Imam Ahmad bin Hanbal disiksa, dicambuk, dan dipenjarakan selama bertahun-tahun karena mempertahankan kebenaran aqidah. Saat ditanya: 'Apakah kamu tidak takut?' Ia menjawab: 'Bagaimana aku takut pada manusia, sedang aku ingin bertemu Allah?' Kesabaran itu bukan soal keadaan — tapi soal kepada siapa kita bergantung.", source: "Imam Ahmad bin Hanbal" },
+  { ar: "", text: "Hasan Al-Bashri berkata: 'Wahai anak Adam, kamu akan mati sendirian, masuk kubur sendirian, dihisab sendirian. Maka bekali dirimu sendiri — jangan andalkan bekal orang lain.'", source: "Hasan Al-Bashri" },
+  { ar: "", text: "Hasan Al-Bashri berkata: 'Aku pernah bergaul dengan orang-orang yang kalau melihat mereka, aku sangka mereka sedang sakit — padahal mereka sehat. Mereka begitu khusyu' dan takut kepada Allah. Itulah yang seharusnya kita cari: hati yang hidup.'", source: "Hasan Al-Bashri" },
+  { ar: "", text: "Sufyan Ats-Tsauri berkata: 'Tidaklah aku mendapati sesuatu yang lebih berat untuk aku luruskan daripada niatku sendiri — karena ia selalu berbolak-balik.' Maka setiap kali duduk murojaah, periksa niatmu: apakah untuk Allah, atau untuk merasa puas?", source: "Sufyan Ats-Tsauri" },
+  { ar: "", text: "Umar bin Khattab ra. berkata: 'Hisablah dirimu sebelum kamu dihisab. Timbanglah amalmu sebelum amalmu ditimbang. Dan bersiaplah untuk hari dimana tidak ada yang tersembunyi.' Setiap centang hari ini adalah hisab kecil yang meringankan hisab yang besar.", source: "Umar bin Khattab ra." },
+  { ar: "", text: "Ali bin Abi Thalib ra. berkata: 'Nilai seseorang adalah kebaikan yang ia lakukan.' Bukan hafalan yang sempurna — tapi usaha yang konsisten itulah yang menentukan nilaimu di sisi Allah.", source: "Ali bin Abi Thalib ra." },
+  { ar: "", text: "Ibnul Jauzi berkata: 'Umur itu seperti es yang meleleh di bawah sinar matahari. Setiap hari berlalu, ia berkurang. Maka jangan sia-siakan hari ini — karena ia tidak akan kembali, dan ia akan menjadi saksi di hari kiamat.'", source: "Ibnul Jauzi" },
+  { ar: "", text: "Imam Malik belajar fiqh selama 16 tahun sebelum berani mengeluarkan satu fatwa. Saat seseorang memintanya menjawab, ia sering berkata: 'Aku tidak tahu.' Kejujuran adalah ilmu yang paling tinggi.", source: "Imam Malik bin Anas" },
+
+  // ── TENTANG ISTIQOMAH ──
+  { ar: "أَحَبُّ الأَعمَالِ إِلَى اللهِ أَدوَمُهَا وَإِن قَلَّ", text: "Rasulullah ﷺ bersabda: 'Amalan yang paling dicintai Allah adalah yang paling konsisten, meskipun sedikit.' Satu halaman tiap hari lebih mulia dari satu juz seminggu sekali.", source: "HR. Bukhari & Muslim" },
+  { ar: "", text: "Syaikh Ibnu 'Utsaimin berkata: 'Istiqomah itu bukan berarti tidak pernah jatuh. Istiqomah artinya setiap kali jatuh, kamu bangkit dan kembali ke jalan yang benar.' Jatuh hari ini bukan gagal — gagal adalah tidak bangkit.", source: "Syaikh Ibnu 'Utsaimin" },
+  { ar: "", text: "Imam Al-Ghazali berkata: 'Disiplin jiwa itu menyakitkan di awal — seperti menelan obat pahit. Tapi buahnya adalah kesehatan abadi.' Tiap kali kamu memaksa dirimu duduk murojaah padahal malas, kamu sedang menelan obat pahit itu.", source: "Imam Al-Ghazali, Ihya Ulumuddin" },
+  { ar: "", text: "Syaikh Abdul Qadir Al-Jailani berkata: 'Jangan lihat betapa jauhnya perjalananmu — lihat betapa dekatnya Allah denganmu sekarang. Satu langkah menuju-Nya, Ia datang berlari kepadamu.'", source: "Syaikh Abdul Qadir Al-Jailani" },
+
+  // ── TENTANG MAKSIAT & TAUBAT ──
+  { ar: "إِنَّ اللهَ يَفرَحُ بِتَوبَةِ عَبدِهِ أَشَدَّ مِن فَرَحِ أَحَدِكُم بِضَالَّتِهِ", text: "Rasulullah ﷺ bersabda: 'Sungguh Allah lebih bergembira dengan taubat hamba-Nya melebihi kegembiraan seseorang yang menemukan kembali untanya yang hilang di padang pasir.' Allah menunggumu kembali — bukan menghukummu karena pergi.", source: "HR. Muslim" },
+  { ar: "يَا عِبَادِيَ الَّذِينَ أَسرَفُوا عَلَى أَنفُسِهِم لَا تَقنَطُوا مِن رَّحمَةِ اللهِ", text: "Allah berfirman: 'Wahai hamba-hamba-Ku yang telah melampaui batas terhadap diri mereka sendiri, jangan berputus asa dari rahmat Allah.' Allah sendiri yang memanggilmu — dengan lembut, bukan dengan murka.", source: "QS. Az-Zumar: 53" },
+  { ar: "", text: "Ibnu Qayyim berkata: 'Dosa yang membuatmu bersedih dan menyesal lebih baik dari ketaatan yang membuatmu sombong dan merasa cukup. Penyesalan itu sendiri adalah pintu taubat yang Allah buka untukmu.'", source: "Ibnu Qayyim Al-Jauziyyah" },
+  { ar: "", text: "Syaikhul Islam Ibnu Taimiyyah berkata: 'Manusia tidak akan pernah bisa lepas dari dosa sepenuhnya. Maka yang Allah tuntut bukan kesempurnaan — tapi taubat yang terus-menerus dan kembali setiap kali jatuh.'", source: "Ibnu Taimiyyah" },
+];
+
+// ══════════════════════════════════════════════════════
+//  STATE & STORAGE
+// ══════════════════════════════════════════════════════
+const SKEY = "muroja_html_v1";
+
+function loadState() {
+  try { const r = localStorage.getItem(SKEY); return r ? JSON.parse(r) : null; } catch { return null; }
+}
+function saveState() {
+  try { localStorage.setItem(SKEY, JSON.stringify(state)); } catch {}
+}
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function initState() {
+  const saved = loadState();
+  if (saved) return saved;
+  return {
+    startDate: todayStr(),
+    juzData: Object.fromEntries(MY_JUZ.map(j => [j.id, { sessions: 0, lastSession: null, rating: null }])),
+    dailySessions: {},   // { "2026-05-24": [juzId,...] }
+    journals: [],        // [{ id, date, juzId, text }]
+    streak: 0,
+    lastActive: null,
+    wisdomIdx: 0,
+    manualWeek: null,
+  };
+}
+
+let state = initState();
+
+// ══════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════
+function calcWeek() {
+  const start = new Date(state.startDate);
+  const diff = Math.floor((new Date() - start) / 86400000);
+  return Math.min(Math.floor(diff / 7), 9);
+}
+function getWeekIdx() {
+  return state.manualWeek !== null ? state.manualWeek : calcWeek();
+}
+function currentJuzId() { return WEEKLY_ORDER[getWeekIdx()]; }
+function currentJuz() { return MY_JUZ.find(j => j.id === currentJuzId()); }
+function completedJuz() { return MY_JUZ.filter(j => state.juzData[j.id]?.rating === 'kuat').length; }
+
+function ramadanDays() {
+  const ram = new Date("2027-02-17");
+  return Math.max(0, Math.ceil((ram - new Date()) / 86400000));
+}
+
+function weekDays(weekIdx) {
+  const start = new Date(state.startDate);
+  start.setDate(start.getDate() + weekIdx * 7);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    return d.toISOString().slice(0,10);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'journal') renderJournal();
+  if (name === 'roadmap') renderRoadmap();
+  if (name === 'guide') renderGuideWisdom();
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER HEADER
+// ══════════════════════════════════════════════════════
+function renderHeader() {
+  const done = completedJuz();
+  const pct = Math.round((done / 10) * 100);
+  document.getElementById('streakNum').textContent = state.streak;
+  document.getElementById('cdDays').textContent = ramadanDays();
+  document.getElementById('cdWeeks').textContent = Math.floor(ramadanDays() / 7);
+  document.getElementById('cdJuz').textContent = done + '/10';
+  document.getElementById('overallPct').textContent = pct + '%';
+  document.getElementById('overallFill').style.width = pct + '%';
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER TODAY
+// ══════════════════════════════════════════════════════
+function renderToday() {
+  const wi = getWeekIdx();
+  const juz = currentJuz();
+  const jd = state.juzData[juz.id] || { sessions: 0, rating: null };
+  const today = todayStr();
+  const todaySessions = state.dailySessions[today] || [];
+  const days = weekDays(wi);
+  const doneSessions = days.filter(d => (state.dailySessions[d] || []).includes(juz.id)).length;
+
+  document.getElementById('wkLabel').textContent = `Minggu ${wi+1} dari 10`;
+  document.getElementById('wkJuz').textContent = juz.label + (juz.group === 'awal' ? ' — Juz Awal' : ' — Juz Akhir');
+  document.getElementById('surahName').textContent = juz.surah;
+
+  // stat
+  let ratingHtml = '';
+  if (jd.rating === 'kuat') ratingHtml = '<span class="rating-kuat">✅ Kuat</span>';
+  else if (jd.rating === 'sedang') ratingHtml = '<span class="rating-sedang">🔄 Sedang</span>';
+  else if (jd.rating === 'lemah') ratingHtml = '<span class="rating-lemah">🌱 Lemah</span>';
+  else ratingHtml = '○ Belum dimulai';
+  document.getElementById('surahStat').innerHTML = `${jd.sessions} sesi · ${ratingHtml}`;
+
+  // week dots
+  const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  let dotsHtml = '';
+  days.forEach(d => {
+    const isDone = (state.dailySessions[d] || []).includes(juz.id);
+    const isToday = d === today;
+    const isPast = d < today;
+    const dayName = dayNames[new Date(d + 'T12:00:00').getDay()];
+    let cls = 'w-dot';
+    if (isToday) cls += ' today';
+    if (isDone) cls += ' done';
+    else if (isPast) cls += ' missed';
+    const mark = isDone ? '✓' : isToday ? '◎' : isPast ? '✗' : '·';
+    dotsHtml += `<div class="${cls}"><span class="w-dot-day">${dayName}</span><span class="w-dot-mark">${mark}</span></div>`;
+  });
+  document.getElementById('weekDots').innerHTML = dotsHtml;
+  document.getElementById('weekProgLbl').textContent = `${doneSessions}/7 hari · ${Math.round((doneSessions/7)*100)}% minggu ini`;
+
+  // session button
+  const btn = document.getElementById('sessionBtn');
+  const note = document.getElementById('sessionNote');
+  const already = todaySessions.includes(juz.id);
+  if (already) {
+    btn.textContent = '✓ Sesi Hari Ini Selesai!';
+    btn.className = 'session-btn done';
+    btn.disabled = true;
+    note.style.display = 'block';
+  } else {
+    btn.textContent = `▶ Tandai Sesi Hari Ini — ${juz.label}`;
+    btn.className = 'session-btn';
+    btn.disabled = false;
+    note.style.display = 'none';
+  }
+
+  // rating buttons
+  ['lemah','sedang','kuat'].forEach(r => {
+    const el = document.getElementById('rb-' + r);
+    el.className = 'r-btn' + (jd.rating === r ? ' active' : '');
+  });
+
+  // mini wisdom
+  const w = WISDOMS[state.wisdomIdx % WISDOMS.length];
+  document.getElementById('miniWisdomTxt').textContent = '"' + w.text + '"';
+  document.getElementById('miniWisdomSrc').textContent = '— ' + w.source;
+}
+
+// ══════════════════════════════════════════════════════
+//  ACTIONS: TODAY
+// ══════════════════════════════════════════════════════
+function changeWeek(dir) {
+  const cur = state.manualWeek !== null ? state.manualWeek : calcWeek();
+  state.manualWeek = Math.max(0, Math.min(9, cur + dir));
+  saveState(); renderToday(); renderHeader();
+}
+
+function doSession() {
+  const juz = currentJuz();
+  const today = todayStr();
+  const arr = state.dailySessions[today] ? [...state.dailySessions[today]] : [];
+  if (arr.includes(juz.id)) return;
+  arr.push(juz.id);
+  state.dailySessions[today] = arr;
+
+  const jd = state.juzData[juz.id] || { sessions: 0, rating: null };
+  const newCount = jd.sessions + 1;
+  let rating = jd.rating;
+  if (newCount >= 7) rating = 'kuat';
+  else if (newCount >= 4) rating = 'sedang';
+  else if (!rating) rating = 'lemah';
+  const wasKuat = jd.rating === 'kuat';
+  state.juzData[juz.id] = { ...jd, sessions: newCount, lastSession: today, rating };
+
+  // streak
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yStr = yesterday.toISOString().slice(0,10);
+  if (state.lastActive === yStr) state.streak += 1;
+  else if (state.lastActive !== today) state.streak = 1;
+  state.lastActive = today;
+
+  if (!wasKuat && rating === 'kuat') showCelebrate(juz.label);
+
+  saveState(); renderToday(); renderHeader();
+}
+
+function undoSession() {
+  const juz = currentJuz();
+  const today = todayStr();
+  const arr = state.dailySessions[today] || [];
+  if (!arr.includes(juz.id)) return;
+  state.dailySessions[today] = arr.filter(id => id !== juz.id);
+
+  const jd = state.juzData[juz.id] || { sessions: 0, rating: null };
+  const newCount = Math.max(0, jd.sessions - 1);
+  let rating = jd.rating;
+  if (newCount === 0) rating = null;
+  else if (newCount < 4) rating = 'lemah';
+  else if (newCount < 7) rating = 'sedang';
+  state.juzData[juz.id] = { ...jd, sessions: newCount, rating };
+
+  // revert streak jika hari ini satu-satunya sesi
+  const todayHasOther = (state.dailySessions[today] || []).length > 0;
+  if (!todayHasOther && state.lastActive === today) {
+    state.streak = Math.max(0, state.streak - 1);
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    state.lastActive = yesterday.toISOString().slice(0,10);
+  }
+
+  saveState(); renderToday(); renderHeader();
+}
+
+
+  const juz = currentJuz();
+  const jd = state.juzData[juz.id] || { sessions: 0, rating: null };
+  state.juzData[juz.id] = { ...jd, rating: r };
+  if (r === 'kuat' && jd.rating !== 'kuat') showCelebrate(juz.label);
+  saveState(); renderToday(); renderHeader();
+}
+
+function showCelebrate(label) {
+  const el = document.getElementById('celebrate');
+  el.textContent = '✨ MasyaAllah! ' + label + ' sudah KUAT! ✨';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function nextWisdom() {
+  state.wisdomIdx = (state.wisdomIdx + 1) % WISDOMS.length;
+  saveState(); renderToday(); renderGuideWisdom();
+}
+
+// ══════════════════════════════════════════════════════
+//  JOURNAL
+// ══════════════════════════════════════════════════════
+let journalDate = todayStr();
+
+function changeJournalDate(dir) {
+  const d = new Date(journalDate + 'T12:00:00');
+  d.setDate(d.getDate() + dir);
+  if (d > new Date()) return;
+  journalDate = d.toISOString().slice(0,10);
+  renderJournal();
+}
+
+function renderJournal() {
+  // date label
+  const d = new Date(journalDate + 'T12:00:00');
+  const isToday = journalDate === todayStr();
+  document.getElementById('jDateLbl').textContent = isToday ? 'Hari ini' : d.toLocaleDateString('id', { day:'numeric', month:'short' });
+
+  // juz context
+  const wi = calcWeek();
+  const juzId = WEEKLY_ORDER[wi];
+  const juz = MY_JUZ.find(j => j.id === juzId);
+  document.getElementById('journalJuzCtx').textContent = `Minggu ${wi+1} · ${juz.label} · ${juz.surah}`;
+
+  // load existing entry for this date
+  const existing = state.journals.find(j => j.date === journalDate);
+  document.getElementById('journalInput').value = existing ? existing.text : '';
+
+  // render list (all entries, newest first)
+  const list = [...state.journals].sort((a,b) => b.date.localeCompare(a.date));
+  const listEl = document.getElementById('journalList');
+  if (list.length === 0) {
+    listEl.innerHTML = '<div class="no-entries">Belum ada jurnal. Tulis yang pertama hari ini. 🌱</div>';
+    return;
+  }
+  listEl.innerHTML = list.map(entry => {
+    const entryDate = new Date(entry.date + 'T12:00:00');
+    const juzInfo = MY_JUZ.find(j => j.id === entry.juzId);
+    const dateStr = entryDate.toLocaleDateString('id', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const preview = entry.text.length > 180 ? entry.text.slice(0,180) + '…' : entry.text;
+    return `<div class="journal-entry">
+      <button class="je-delete" onclick="deleteJournal('${entry.id}')" title="Hapus">✕</button>
+      <div class="je-date">${dateStr}</div>
+      ${juzInfo ? `<div class="je-juz">📖 ${juzInfo.label} — ${juzInfo.surah}</div>` : ''}
+      <div class="je-text">${preview.replace(/\n/g,'<br>')}</div>
+    </div>`;
+  }).join('');
+}
+
+function saveJournal() {
+  const text = document.getElementById('journalInput').value.trim();
+  if (!text) return;
+  const wi = calcWeek();
+  const juzId = WEEKLY_ORDER[wi];
+  const existing = state.journals.findIndex(j => j.date === journalDate);
+  if (existing >= 0) {
+    state.journals[existing].text = text;
+    state.journals[existing].juzId = juzId;
+  } else {
+    state.journals.push({ id: Date.now().toString(), date: journalDate, juzId, text });
+  }
+  saveState();
+  const badge = document.getElementById('savedBadge');
+  badge.style.display = 'inline';
+  setTimeout(() => badge.style.display = 'none', 2000);
+  renderJournal();
+}
+
+function deleteJournal(id) {
+  if (!confirm('Hapus entri jurnal ini?')) return;
+  state.journals = state.journals.filter(j => j.id !== id);
+  saveState(); renderJournal();
+}
+
+// ══════════════════════════════════════════════════════
+//  ROADMAP
+// ══════════════════════════════════════════════════════
+function renderRoadmap() {
+  const wi = getWeekIdx();
+  ['awal','akhir'].forEach(group => {
+    const juzList = MY_JUZ.filter(j => j.group === group);
+    const html = juzList.map(juz => {
+      const weekForThis = WEEKLY_ORDER.indexOf(juz.id);
+      const jd = state.juzData[juz.id] || { sessions: 0, rating: null };
+      const isCurrent = wi === weekForThis;
+      const isPast = wi > weekForThis;
+      const pct = Math.min(100, Math.round((jd.sessions / 7) * 100));
+      const fillColor = jd.rating === 'kuat' ? '#5bba8a' : '#c8a84b';
+      const numCls = isCurrent ? 'active' : (jd.rating === 'kuat' ? 'done-wk' : '');
+      const status = jd.rating === 'kuat' ? '✅' : jd.sessions > 0 ? '🔄' : isPast ? '⚠️' : '○';
+      return `<div class="rm-row ${isCurrent?'current':''}">
+        <div class="rm-week">
+          <span class="rm-wk-lbl">Minggu</span>
+          <span class="rm-wk-num ${numCls}">${weekForThis+1}</span>
+        </div>
+        <div class="rm-body">
+          <div class="rm-juz">${juz.label}</div>
+          <div class="rm-surah">${juz.surah}</div>
+          <div class="rm-bar-bg"><div class="rm-bar-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+        </div>
+        <div class="rm-status">${status}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('rm' + (group === 'awal' ? 'Awal' : 'Akhir')).innerHTML = html;
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  GUIDE WISDOM
+// ══════════════════════════════════════════════════════
+function renderGuideWisdom() {
+  const w = WISDOMS[state.wisdomIdx % WISDOMS.length];
+  const arEl = document.getElementById('guideWisdomAr');
+  arEl.textContent = w.ar;
+  arEl.style.display = w.ar ? 'block' : 'none';
+  document.getElementById('guideWisdomTxt').textContent = w.text;
+  document.getElementById('guideWisdomSrc').textContent = '— ' + w.source;
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════════════════
+renderHeader();
+renderToday();
+renderGuideWisdom();
+</script>
+</body>
+</html>
